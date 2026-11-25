@@ -1,7 +1,18 @@
 /* VARIABLES */
-let avoider1, avoider2, avoider3;
+let avoider1, avoider2, avoider3, avoider4, avoider5;
 let player;
-let gameWon = false;
+
+let gameOver = false;
+
+/* Player Lives */
+let lives = 3;
+
+/* Timer */
+let startTime;
+let elapsedTime = 0;
+
+/* Collision */
+let hitCooldownUntil = 0;
 
 /* PRELOAD LOADS FILES */
 function preload() {
@@ -15,7 +26,7 @@ function setup() {
     // Create the player
     player = {
         x: 200,
-        y: 20,
+        y: 200,
         size: 30,
         speed: 3
     };
@@ -23,41 +34,65 @@ function setup() {
     // Create the avoiders
     avoider1 = {
         x: 10,
-        y: 100,
+        y: random(50, 350),
         w: 120,
         h: 20,
-        speed: 3,
+        speed: 6,
         color: "green"
     };
 
     avoider2 = {
         x: -100,
-        y: 200,
+        y: random(50, 350),
         w: 80,
         h: 20,
-        speed: 5,
+        speed: 10,
         color: "blue"
     };
 
     avoider3 = {
         x: -100,
-        y: 300,
+        y: random(50, 350),
         w: 180,
         h: 20,
-        speed: 2,
+        speed: 4,
         color: "purple"
     };
+    
+    avoider4 = {
+        x: -100,
+        y: random(50, 350),
+        w: 180,
+        h: 20,
+        speed: 8,
+        color: "pink"
+    };
+
+    avoider5 = {
+        x: -100,
+        y: random(50, 350),
+        w: 180,
+        h: 20,
+        speed: 6,
+        color: "red"
+    };
+
+    // Start the survival timer
+    startTime = millis();
 }
 
 /* DRAW LOOP REPEATS */
 function draw() {
     background(137, 213, 210);
 
-    // Stop game if player wins
-    if (gameWon) {
-        youWin();
-        return;
+    // Stop game if player loses
+    if (gameOver) {
+      youLose();
+      return;
     }
+
+    // Calculate survival time
+    elapsedTime = floor((millis() - startTime) / 1000);
 
     // STEP 1: Program player movement
     // TODO: Add LEFT_ARROW movement
@@ -82,7 +117,7 @@ function draw() {
     // TODO: Use constrain() for horizontal movement
     player.x = constrain(player.x, player.size / 2, 400 - player.size / 2);
     // TODO: Use max() to prevent moving above screen
-    player.y = max(player.y, player.size / 2);
+    player.y = constrain(player.y, player.size / 2, 400 - player.size / 2);
 
 
     // STEP 3: Move the avoiders
@@ -90,45 +125,60 @@ function draw() {
     avoider1.x += avoider1.speed;
     avoider2.x += avoider2.speed;
     avoider3.x += avoider3.speed;
+    avoider4.x += avoider4.speed;
+    avoider5.x += avoider5.speed;
 
 
     // STEP 4: Reset avoiders when they leave screen
     // TODO: Check avoider1
     if (avoider1.x > 400 + avoider1.w / 2) {
       avoider1.x = -avoider1.w / 2;
+      avoider1.y = random(50, 350);
     }
     // TODO: Check avoider2
     if (avoider2.x > 400 + avoider2.w / 2) {
       avoider2.x = -avoider2.w / 2;
+      avoider2.y = random(50, 350);
     }
     // TODO: Check avoider3
     if (avoider3.x > 400 + avoider3.w / 2) {
       avoider3.x = -avoider3.w / 2;
+      avoider3.y = random(50, 350);
+    }
+    // TODO: Check avoider4
+    if (avoider4.x > 400 + avoider4.w / 2) {
+      avoider4.x = -avoider4.w / 2;
+      avoider4.y = random(50, 350);
+    }
+    // TODO: Check avoider5
+    if (avoider5.x > 400 + avoider5.w / 2) {
+      avoider5.x = -avoider5.w / 2;
+      avoider5.y = random(50, 350);
     }
 
-
+    
     // STEP 5: Check collisions
-    // TODO: Call checkCollision() for all three avoiders
-    if (checkCollision(player, avoider1) || checkCollision(player, avoider2) || checkCollision(player, avoider3)) {
+    if (millis() > hitCooldownUntil) {
+      // TODO: Call checkCollision() for all three avoiders
+        if (checkCollision(player, avoider1) ||
+            checkCollision(player, avoider2) ||
+            checkCollision(player, avoider3) ||
+            checkCollision(player, avoider4) ||
+            checkCollision(player, avoider5)) {
 
-      // TODO: If a collision occurs, reset player to (200, 20)
-      player.x = 200;
-      player.y = 20;
+            // Remove one life
+            lives--;
+
+            // Give player 1 second of protection
+            hitCooldownUntil = millis() + 1000;
+
+            // Check if player has lost all lives
+            if (lives <= 0) {
+                gameOver = true;
+            }
+        }
     }
-    
-
-    // STEP 6: Check if player reached bottom
-    // TODO: Check the bottom edge of the player
-    if (player.y + player.size / 2 >= 400) {
-      // TODO: Set gameWon to true
-      gameWon = true;
-
-      // TODO: Call youWin() and return
-      youWin();
-      return;
-    }
-    
-
+  
     // Draw player
     fill("black");
     noStroke();
@@ -145,9 +195,22 @@ function draw() {
 
     fill(avoider3.color);
     rect(avoider3.x, avoider3.y, avoider3.w, avoider3.h);
+
+    fill(avoider4.color);
+    rect(avoider4.x, avoider4.y, avoider4.w, avoider4.h);
+
+    fill(avoider5.color);
+    rect(avoider5.x, avoider5.y, avoider5.w, avoider5.h);
+
+    // Display lives and timer
+    fill("black");
+    textSize(18);
+    textAlign(LEFT, TOP);
+
+    text("Lives: " + lives, 10, 10);
+    text("Time: " + elapsedTime + "s", 10, 35);
 }
 
-/* COLLISION DETECTION */
 /* COLLISION DETECTION */
 function checkCollision(p, a) {
 
@@ -168,12 +231,19 @@ function checkCollision(p, a) {
   return distance < p.size / 2;
 }
 
-/* WIN FUNCTION */
-function youWin() {
+/* GAME OVER FUNCTION */
+function youLose() {
     background(137, 213, 210);
 
-    fill(0, 128, 128);
+    fill("red");
     textAlign(CENTER, CENTER);
     textSize(30);
-    text("You win!", 200, 200);
+    text("Game Over!", 200, 170);
+
+    fill("black");
+    textSize(20);
+    text("You survived " + elapsedTime + " seconds!", 200, 220);
+
+    textSize(16);
+    text("You ran out of lives.", 200, 260);
 }
